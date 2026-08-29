@@ -1,13 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 
-// Read .env if it exists (local dev). On GitHub Actions there is no .env
-// file — the six VITE_FIREBASE_* values arrive as real environment
-// variables instead (injected from repo secrets in data.yml). So for
-// each key we check the parsed .env file FIRST, then fall back to
-// process.env, so this script produces a correct service worker in
-// both environments instead of silently writing placeholder values
-// during CI builds.
 const env = fs.existsSync(".env") ? fs.readFileSync(".env", "utf8") : "";
 const fromDotEnv = {};
 for (const line of env.split(/\r?\n/)) {
@@ -56,8 +49,8 @@ fs.writeFileSync(
 importScripts('https://www.gstatic.com/firebasejs/12.1.0/firebase-messaging-compat.js');
 firebase.initializeApp(${JSON.stringify(cfg)});
 const messaging=firebase.messaging();
-messaging.onBackgroundMessage(({notification,data})=>{const n=notification||{}; self.registration.showNotification(n.title||'💌 Friend Reminder',{body:n.body||'You have a reminder.',icon:'/icon-192.png',data:{url:data?.url||'/'}});});
-self.addEventListener('notificationclick',event=>{event.notification.close();event.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(cs=>{for(const c of cs){if('focus'in c)return c.focus();}return clients.openWindow(event.notification.data?.url||'/');}));});
+messaging.onBackgroundMessage(({notification,data})=>{const n=notification||{}; self.registration.showNotification(n.title||'💌 Friend Reminder',{body:n.body||'You have a reminder.',icon:'icon-192.png',data:{url:data?.url||'/kuchu-puchu/'}});});
+self.addEventListener('notificationclick',event=>{event.notification.close();event.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(cs=>{for(const c of cs){if('focus'in c)return c.focus();}return clients.openWindow(event.notification.data?.url||'/kuchu-puchu/');}));});
 `,
 );
 
