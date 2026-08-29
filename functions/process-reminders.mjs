@@ -24,12 +24,12 @@ async function run() {
 
 	for (const ref of snap.docs) {
 		try {
-			const fresh = (await ref.get()).data();
+			const fresh = (await ref.ref.get()).data();
 			if (!fresh || fresh.status !== "ACTIVE" || fresh.nextRunAt > now)
 				continue;
 
 			if (fresh.endAt && fresh.nextRunAt >= fresh.endAt) {
-				await ref.update({
+				await ref.ref.update({
 					status: "COMPLETED",
 					updatedAt: Date.now(),
 				});
@@ -79,12 +79,15 @@ async function run() {
 					? null
 					: fresh.nextRunAt + MS_FREQ[fresh.frequency];
 			if (next === null || (fresh.endAt && next >= fresh.endAt)) {
-				await ref.update({
+				await ref.ref.update({
 					status: "COMPLETED",
 					updatedAt: Date.now(),
 				});
 			} else {
-				await ref.update({ nextRunAt: next, updatedAt: Date.now() });
+				await ref.ref.update({
+					nextRunAt: next,
+					updatedAt: Date.now(),
+				});
 			}
 		} catch (e) {
 			console.error(`Error processing reminder ${ref.id}:`, e);
