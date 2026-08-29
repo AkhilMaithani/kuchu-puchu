@@ -1,0 +1,34 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"useDefineForClassFields": true,
+		"lib": ["ES2023", "DOM", "DOM.Iterable"],
+		"module": "ESNext",
+		"skipLibCheck": true,
+
+		/* Bundler mode (matches how Vite resolves modules) */
+		"moduleResolution": "bundler",
+		"allowImportingTsExtensions": true,
+		"isolatedModules": true,
+		"moduleDetection": "force",
+		"noEmit": true,
+		"jsx": "react-jsx",
+
+		/* This is what fixes the import.meta.env / CSS-import errors
+		   from earlier — it loads Vite's ambient type declarations
+		   even without a separate vite-env.d.ts file (though keeping
+		   one alongside this doesn't hurt). */
+		"types": ["vite/client"],
+
+		/* Linting strictness — relax any of these if they produce
+		   more noise than value while you're actively building */
+		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noFallthroughCasesInSwitch": true,
+
+		/* Required for tsc -b (project references / composite build) */
+		"composite": true
+	},
+	"include": ["src"]
+}
