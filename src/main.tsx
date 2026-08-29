@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { hasActiveDevice } from "./data";
 import {
 	HashRouter,
 	useNavigate,
@@ -598,6 +599,15 @@ function NewPage({ user }: { user: User }) {
 
 function Settings({ user }: { user: User }) {
 	const [msg, setMsg] = useState("");
+	const [enabled, setEnabled] = useState(false);
+	const [checking, setChecking] = useState(true);
+
+	useEffect(() => {
+		hasActiveDevice()
+			.then(setEnabled)
+			.finally(() => setChecking(false));
+	}, []);
+
 	return (
 		<>
 			<h1>Settings</h1>
@@ -607,19 +617,32 @@ function Settings({ user }: { user: User }) {
 					Enable push once on each device. The app does not need to
 					stay open.
 				</p>
-				<button
-					onClick={async () => {
-						try {
-							await enablePush((t, b) => setMsg(`${t}: ${b}`));
-							setMsg("Notifications enabled on this device ✅");
-						} catch (e: any) {
-							setMsg(e.message);
-						}
-					}}
-				>
-					Enable notifications
-				</button>
-				{msg && <div className="notice">{msg}</div>}
+				{checking ? (
+					<p className="muted">Checking…</p>
+				) : enabled ? (
+					<div className="notice">
+						Notifications enabled on this device ✅
+					</div>
+				) : (
+					<button
+						onClick={async () => {
+							try {
+								await enablePush((t, b) =>
+									setMsg(`${t}: ${b}`),
+								);
+								setEnabled(true);
+								setMsg(
+									"Notifications enabled on this device ✅",
+								);
+							} catch (e: any) {
+								setMsg(e.message);
+							}
+						}}
+					>
+						Enable notifications
+					</button>
+				)}
+				{msg && !enabled && <div className="notice">{msg}</div>}
 			</div>
 			<div className="card">
 				<h3>Your account</h3>

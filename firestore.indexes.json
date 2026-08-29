@@ -1,1 +1,12 @@
-{"indexes":[]}
+{
+	"indexes": [
+		{
+			"collectionGroup": "reminders",
+			"queryScope": "COLLECTION",
+			"fields": [
+				{ "fieldPath": "status", "order": "ASCENDING" },
+				{ "fieldPath": "nextRunAt", "order": "ASCENDING" }
+			]
+		}
+	]
+}

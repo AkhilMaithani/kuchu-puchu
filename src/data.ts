@@ -108,3 +108,13 @@ export async function savePushToken(token: string) {
 		{ merge: true },
 	);
 }
+
+export async function hasActiveDevice(): Promise<boolean> {
+	const snap = await getDocs(
+		query(
+			collection(db, "users", uid(), "devices"),
+			where("active", "==", true),
+		),
+	);
+	return !snap.empty;
+}
