@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function myUser() { return get(/databases/$(database)/documents/users/$(request.auth.uid)); }
+    function sameCircle(circleId) { return signedIn() && myUser().data.circleId == circleId; }
+
+    match /circles/{circleId} {
+      allow read: if sameCircle(circleId);
+      allow create: if signedIn() && request.resource.data.ownerId == request.auth.uid && request.resource.data.memberCount == 1;
+      allow update: if signedIn() && (
+        resource.data.ownerId == request.auth.uid ||
+        (exists(/databases/$(database)/documents/joinAttempts/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/joinAttempts/$(request.auth.uid)).data.circleId == circleId &&
+         request.resource.data.ownerId == resource.data.ownerId &&
+         request.resource.data.memberCount == resource.data.memberCount + 1 &&
+         request.resource.data.memberCount <= 5)
+      );
+    }
+
+    match /joinAttempts/{uid} {
+      allow create: if signedIn() && uid == request.auth.uid &&
+        exists(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)) &&
+        get(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.circleId == request.resource.data.circleId;
+      allow delete: if signedIn() && uid == request.auth.uid;
+      allow read,update: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && sameCircle(resource.data.circleId);
+      allow create: if signedIn() && userId == request.auth.uid && (
+        (exists(/databases/$(database)/documents/circles/$(request.resource.data.circleId)) &&
+         get(/databases/$(database)/documents/circles/$(request.resource.data.circleId)).data.ownerId == request.auth.uid) ||
+        (exists(/databases/$(database)/documents/joinAttempts/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/joinAttempts/$(request.auth.uid)).data.circleId == request.resource.data.circleId)
+      );
+      allow update: if signedIn() && userId == request.auth.uid && resource.data.circleId == request.resource.data.circleId;
+      match /devices/{deviceId} { allow read,write: if signedIn() && userId == request.auth.uid; }
+    }
+
+    match /invites/{code} {
+      allow read: if signedIn();
+      allow create: if signedIn() && sameCircle(request.resource.data.circleId) &&
+        get(/databases/$(database)/documents/circles/$(request.resource.data.circleId)).data.ownerId == request.auth.uid;
+      allow update,delete: if false;
+    }
+
+    match /reminders/{id} {
+      allow read: if signedIn() && sameCircle(resource.data.circleId) &&
+        (resource.data.creatorId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+      allow create: if signedIn() && sameCircle(request.resource.data.circleId) &&
+        request.resource.data.creatorId == request.auth.uid &&
+        get(/databases/$(database)/documents/users/$(request.resource.data.receiverId)).data.circleId == request.resource.data.circleId;
+      allow update: if signedIn() && sameCircle(resource.data.circleId) &&
+        (resource.data.creatorId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+      allow delete: if false;
+    }
+  }
+}

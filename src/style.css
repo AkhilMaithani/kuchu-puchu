@@ -1,0 +1,309 @@
+:root {
+	font-family:
+		Inter,
+		system-ui,
+		-apple-system,
+		BlinkMacSystemFont,
+		"Segoe UI",
+		sans-serif;
+	color: #2c2230;
+	background: #fff8fc;
+	line-height: 1.5;
+}
+* {
+	box-sizing: border-box;
+}
+body {
+	margin: 0;
+}
+button,
+.primary {
+	border: 0;
+	border-radius: 12px;
+	padding: 11px 16px;
+	background: #6d3f67;
+	color: white;
+	font-weight: 700;
+	cursor: pointer;
+	text-decoration: none;
+}
+button.secondary,
+.secondary {
+	background: #f1e8ef;
+	color: #4b3a48;
+}
+.danger {
+	background: #ffe6ec;
+	color: #a12648;
+}
+.app {
+	min-height: 100vh;
+}
+.app header {
+	height: 72px;
+	padding: 0 6%;
+	display: flex;
+	align-items: center;
+	gap: 28px;
+	border-bottom: 1px solid #eadfe7;
+	background: #fffafd;
+	position: sticky;
+	top: 0;
+	z-index: 3;
+}
+.brand {
+	font-weight: 900;
+	color: #6d3f67;
+	text-decoration: none;
+	font-size: 19px;
+}
+.app nav {
+	display: flex;
+	gap: 18px;
+	flex: 1;
+}
+.app nav a {
+	color: #6c5c69;
+	text-decoration: none;
+}
+.app nav a.active {
+	color: #6d3f67;
+	font-weight: 800;
+}
+.app main {
+	max-width: 1000px;
+	margin: 0 auto;
+	padding: 42px 22px 90px;
+}
+.hero,
+.row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+}
+.hero {
+	margin-bottom: 24px;
+}
+.hero h1 {
+	margin: 0;
+}
+.grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px;
+}
+.stack {
+	display: grid;
+	gap: 14px;
+	margin-top: 16px;
+}
+.card {
+	background: white;
+	border: 1px solid #eadfe7;
+	border-radius: 18px;
+	padding: 20px;
+	box-shadow: 0 8px 28px rgba(70, 30, 60, 0.05);
+}
+.big {
+	display: block;
+	font-size: 34px;
+	margin: 8px 0;
+}
+.muted {
+	color: #7b6c79;
+}
+.pill {
+	display: inline-block;
+	padding: 5px 9px;
+	border-radius: 99px;
+	font-size: 12px;
+	font-weight: 800;
+	background: #eee;
+}
+.pill.active {
+	background: #e4f8ec;
+	color: #247445;
+}
+.pill.pending {
+	background: #fff1cc;
+	color: #8b6500;
+}
+.pill.rejected,
+.pill.cancelled {
+	background: #ffe6ec;
+	color: #a12648;
+}
+.pill.completed {
+	background: #e8edf8;
+	color: #42577f;
+}
+.actions {
+	display: flex;
+	gap: 10px;
+	margin-top: 16px;
+}
+.formCard {
+	max-width: 650px;
+}
+.formCard form,
+.authCard form {
+	display: grid;
+	gap: 15px;
+}
+.formCard label {
+	display: grid;
+	gap: 7px;
+	font-weight: 700;
+}
+.formCard input,
+.formCard textarea,
+.formCard select,
+.authCard input {
+	width: 100%;
+	padding: 12px 13px;
+	border: 1px solid #ddcfda;
+	border-radius: 11px;
+	background: #fff;
+	font: inherit;
+}
+.message {
+	font-size: 18px;
+}
+.notice,
+.success {
+	margin: 16px 0;
+	padding: 13px 15px;
+	border-radius: 12px;
+	background: #edf9f1;
+	color: #276c42;
+}
+.error {
+	padding: 11px;
+	border-radius: 10px;
+	background: #fff0f3;
+	color: #a12648;
+}
+.auth {
+	min-height: 100vh;
+	display: grid;
+	place-items: center;
+	padding: 24px;
+}
+.authCard {
+	width: min(420px, 100%);
+	text-align: center;
+}
+.authCard input {
+	text-align: left;
+}
+.logo {
+	font-size: 42px;
+}
+.linkBtn {
+	background: none;
+	color: #6d3f67;
+	padding: 4px;
+	margin-top: 8px;
+}
+footer {
+	display: none;
+}
+.center {
+	min-height: 100vh;
+	display: grid;
+	place-items: center;
+}
+@media (max-width: 720px) {
+	.app header {
+		height: 64px;
+		padding: 0 16px;
+	}
+	.app header nav {
+		display: none;
+	}
+	.app header .secondary {
+		margin-left: auto;
+	}
+	.app main {
+		padding: 28px 16px 88px;
+	}
+	.grid {
+		grid-template-columns: 1fr;
+	}
+	.hero {
+		align-items: flex-start;
+	}
+	.hero .primary {
+		white-space: nowrap;
+	}
+	footer {
+		display: flex;
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		height: 62px;
+		background: #fff;
+		border-top: 1px solid #eadfe7;
+		justify-content: space-around;
+		align-items: center;
+		z-index: 4;
+	}
+	footer a {
+		text-decoration: none;
+		font-size: 21px;
+	}
+	.card {
+		padding: 16px;
+	}
+}
+
+/* --- Password Guidance Styles --- */
+
+.password-container {
+	display: grid;
+	gap: 8px;
+}
+
+.password-hints {
+	text-align: left;
+	background: #fbfaff;
+	border: 1px solid var(--border-color);
+	border-radius: var(--radius-sm);
+	padding: 12px;
+	margin-top: 8px;
+}
+
+.hint-title {
+	font-size: 12px;
+	font-weight: 700;
+	color: var(--text-muted);
+	margin: 0 0 8px 0;
+}
+
+.hint-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+	color: #a090a0;
+	transition: all 0.2s ease;
+	margin-bottom: 4px;
+}
+
+.hint-item span {
+	font-weight: 900;
+	opacity: 0.3;
+}
+
+/* When the requirement is met */
+.hint-item.valid {
+	color: var(--color-active-text);
+	font-weight: 600;
+}
+
+.hint-item.valid span {
+	color: var(--color-active-text);
+	opacity: 1;
+}
