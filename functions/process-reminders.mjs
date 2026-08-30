@@ -8,11 +8,15 @@ const db = admin.firestore();
 const messaging = admin.messaging();
 
 const now = Date.now();
-const MS_FREQ = {
-	EVERY_30_MINUTES: 30 * 60e3,
-	EVERY_HOUR: 60 * 60e3,
-	DAILY: 24 * 60 * 60e3,
-};
+
+function msForFrequency(freq) {
+	if (freq === "DAILY") return 24 * 60 * 60e3;
+	if (freq === "EVERY_30_MINUTES") return 30 * 60e3; // legacy value
+	if (freq === "EVERY_HOUR") return 60 * 60e3; // legacy value
+	const match = /^EVERY_(\d+)_HOURS?$/.exec(freq);
+	if (match) return parseInt(match[1], 10) * 60 * 60e3;
+	return null;
+}
 
 async function run() {
 	const snap = await db
@@ -77,7 +81,7 @@ async function run() {
 			const next =
 				fresh.frequency === "ONCE"
 					? null
-					: fresh.nextRunAt + MS_FREQ[fresh.frequency];
+					: fresh.nextRunAt + msForFrequency(fresh.frequency);
 			if (next === null || (fresh.endAt && next >= fresh.endAt)) {
 				await ref.ref.update({
 					status: "COMPLETED",

@@ -1,21 +1,21 @@
 name: Process reminders
 on:
-  schedule:
-    - cron: '*/5 * * * *'
-  workflow_dispatch:
+    schedule:
+        - cron: "*/1 * * * *"
+    workflow_dispatch:
 jobs:
-  process:
-    runs-on: ubuntu-latest
-    timeout-minutes: 1
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: {node-version: 22}
-      - run: npm install --no-audit --no-fund
-        working-directory: functions
-      - name: Process due reminders
-        env:
-          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
-          APP_URL: ${{ vars.APP_URL }}
-          ICON_URL: ${{ vars.ICON_URL }}
-        run: node functions/process-reminders.mjs
+    process:
+        runs-on: ubuntu-latest
+        timeout-minutes: 1
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with: { node-version: 22 }
+            - run: npm install --no-audit --no-fund
+              working-directory: functions
+            - name: Process due reminders
+              env:
+                  FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+                  APP_URL: ${{ vars.APP_URL }}
+                  ICON_URL: ${{ vars.ICON_URL }}
+              run: node functions/process-reminders.mjs

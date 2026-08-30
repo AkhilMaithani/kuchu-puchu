@@ -484,7 +484,7 @@ function NewPage({ user }: { user: User }) {
 	const [f, setF] = useState({
 		message: "",
 		receiverId: user.id,
-		frequency: "EVERY_30_MINUTES" as Frequency,
+		frequency: "EVERY_1_HOUR" as Frequency,
 		startAt: new Date(Date.now() + 60000).toISOString().slice(0, 16),
 		endAt: "",
 	});
@@ -497,6 +497,16 @@ function NewPage({ user }: { user: User }) {
 
 	const handleSubmit = async (ev: React.FormEvent) => {
 		ev.preventDefault();
+
+		const MIN_LEAD_MINUTES = 6;
+		const leadMs = new Date(f.startAt).getTime() - Date.now();
+		if (leadMs < MIN_LEAD_MINUTES * 60_000) {
+			setE(
+				`Start time must be at least ${MIN_LEAD_MINUTES} minutes from now — otherwise it may be missed and will run at its next scheduled time instead.`,
+			);
+			return;
+		}
+
 		setIsLoading(true);
 		setE("");
 		try {
@@ -559,10 +569,16 @@ function NewPage({ user }: { user: User }) {
 							}
 						>
 							<option value="ONCE">Once</option>
-							<option value="EVERY_30_MINUTES">
-								Every 30 minutes
-							</option>
-							<option value="EVERY_HOUR">Every hour</option>
+							{Array.from({ length: 12 }, (_, i) => i + 1).map(
+								(h) => (
+									<option
+										key={h}
+										value={`EVERY_${h}_HOUR${h > 1 ? "S" : ""}`}
+									>
+										Every {h} hour{h > 1 ? "s" : ""}
+									</option>
+								),
+							)}
 							<option value="DAILY">Daily</option>
 						</select>
 					</label>
