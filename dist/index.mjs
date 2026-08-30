@@ -1,11 +1,60 @@
-import admin from "firebase-admin";
+/******/ var __webpack_modules__ = ({
+
+/***/ 41:
+/***/ ((module) => {
+
+module.exports = eval("require")("firebase-admin");
+
+
+/***/ })
+
+/******/ });
+/************************************************************************/
+/******/ // The module cache
+/******/ var __webpack_module_cache__ = {};
+/******/ 
+/******/ // The require function
+/******/ function __nccwpck_require__(moduleId) {
+/******/ 	// Check if module is in cache
+/******/ 	var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 	if (cachedModule !== undefined) {
+/******/ 		return cachedModule.exports;
+/******/ 	}
+/******/ 	// Create a new module (and put it into the cache)
+/******/ 	var module = __webpack_module_cache__[moduleId] = {
+/******/ 		// no module.id needed
+/******/ 		// no module.loaded needed
+/******/ 		exports: {}
+/******/ 	};
+/******/ 
+/******/ 	// Execute the module function
+/******/ 	var threw = true;
+/******/ 	try {
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __nccwpck_require__);
+/******/ 		threw = false;
+/******/ 	} finally {
+/******/ 		if(threw) delete __webpack_module_cache__[moduleId];
+/******/ 	}
+/******/ 
+/******/ 	// Return the exports of the module
+/******/ 	return module.exports;
+/******/ }
+/******/ 
+/************************************************************************/
+/******/ /* webpack/runtime/asset-relocator-loader */
+/******/ if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = decodeURIComponent(new URL('.', import.meta.url).pathname).slice(import.meta.url.match(/^file:\/\/\/\w:/) ? 1 : 0, -1) + "/";
+/******/ 
+/************************************************************************/
+var __webpack_exports__ = {};
+/* harmony import */ var firebase_admin__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(41);
+
 
 const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 if (!raw) throw new Error("Missing FIREBASE_SERVICE_ACCOUNT_JSON secret");
-admin.initializeApp({ credential: admin.credential.cert(JSON.parse(raw)) });
+firebase_admin__WEBPACK_IMPORTED_MODULE_0__.initializeApp({ credential: firebase_admin__WEBPACK_IMPORTED_MODULE_0__.credential.cert(JSON.parse(raw)) });
 
-const db = admin.firestore();
-const messaging = admin.messaging();
+const db = firebase_admin__WEBPACK_IMPORTED_MODULE_0__.firestore();
+const messaging = firebase_admin__WEBPACK_IMPORTED_MODULE_0__.messaging();
 
 const now = Date.now();
 
@@ -113,3 +162,4 @@ async function run() {
 }
 
 run().catch(console.error);
+

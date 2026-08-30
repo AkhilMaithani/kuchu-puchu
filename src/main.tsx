@@ -18,6 +18,8 @@ import {
 	approve,
 	reject,
 	cancel,
+	deleteReminder,
+	updateReminderMessage,
 } from "./data";
 import { enablePush } from "./push";
 import type { User, Reminder, Frequency } from "./types";
@@ -254,11 +256,28 @@ function ReminderCard({
 	user: User;
 	reload: () => void;
 }) {
+	const [editing, setEditing] = useState(false);
+	const [draft, setDraft] = useState(r.message);
+	const [saving, setSaving] = useState(false);
+
+	const canDelete =
+		["COMPLETED", "CANCELLED", "REJECTED"].includes(r.status) &&
+		(r.creatorId === user.id || r.receiverId === user.id);
+	const canEdit = r.status === "ACTIVE" && r.creatorId === user.id;
+
 	return (
 		<div className="card">
 			<div className="row">
 				<div>
-					<h3>{r.message}</h3>
+					{editing ? (
+						<textarea
+							value={draft}
+							maxLength={200}
+							onChange={(x) => setDraft(x.target.value)}
+						/>
+					) : (
+						<h3>{r.message}</h3>
+					)}
 					<p className="muted">
 						{r.creatorId === user.id
 							? `For ${r.receiverName}`
@@ -273,18 +292,77 @@ function ReminderCard({
 					{r.status}
 				</span>
 			</div>
-			{r.status === "ACTIVE" &&
-				(r.creatorId === user.id || r.receiverId === user.id) && (
+
+			<div className="actions">
+				{r.status === "ACTIVE" &&
+					(r.creatorId === user.id || r.receiverId === user.id) &&
+					!editing && (
+						<button
+							className="danger"
+							onClick={async () => {
+								await cancel(r.id);
+								reload();
+							}}
+						>
+							Cancel
+						</button>
+					)}
+
+				{canEdit && !editing && (
+					<button
+						className="secondary"
+						onClick={() => setEditing(true)}
+					>
+						Edit
+					</button>
+				)}
+
+				{editing && (
+					<>
+						<button
+							disabled={saving || !draft.trim()}
+							onClick={async () => {
+								setSaving(true);
+								try {
+									await updateReminderMessage(
+										r.id,
+										draft.trim(),
+									);
+									setEditing(false);
+									reload();
+								} finally {
+									setSaving(false);
+								}
+							}}
+						>
+							{saving ? "Saving..." : "Save"}
+						</button>
+						<button
+							className="secondary"
+							onClick={() => {
+								setDraft(r.message);
+								setEditing(false);
+							}}
+						>
+							Cancel edit
+						</button>
+					</>
+				)}
+
+				{canDelete && (
 					<button
 						className="danger"
 						onClick={async () => {
-							await cancel(r.id);
-							reload();
+							if (confirm("Delete this reminder permanently?")) {
+								await deleteReminder(r.id);
+								reload();
+							}
 						}}
 					>
-						Cancel
+						Delete
 					</button>
 				)}
+			</div>
 		</div>
 	);
 }
@@ -675,8 +753,14 @@ function App() {
 
 	useEffect(() => {
 		watchAuth(async (f) => {
-			setUser(f ? await profile(f.uid) : null);
-			setLoading(false);
+			try {
+				setUser(f ? await profile(f.uid) : null);
+			} catch (err) {
+				console.error("Failed to load profile:", err);
+				setUser(null);
+			} finally {
+				setLoading(false);
+			}
 		});
 	}, []);
 

@@ -6,6 +6,7 @@ import {
 	getDocs,
 	setDoc,
 	updateDoc,
+	deleteDoc,
 	query,
 	where,
 	serverTimestamp,
@@ -86,6 +87,15 @@ export async function cancel(id: string) {
 	await updateDoc(doc(db, "reminders", id), {
 		status: "CANCELLED",
 		cancelledAt: Date.now(),
+		updatedAt: Date.now(),
+	});
+}
+export async function deleteReminder(id: string) {
+	await deleteDoc(doc(db, "reminders", id));
+}
+export async function updateReminderMessage(id: string, message: string) {
+	await updateDoc(doc(db, "reminders", id), {
+		message,
 		updatedAt: Date.now(),
 	});
 }

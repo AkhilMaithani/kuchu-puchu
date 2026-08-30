@@ -25,8 +25,7 @@ messaging.onBackgroundMessage((payload) => {
 	const body = payload.notification?.body || "You have a reminder.";
 	self.registration.showNotification(title, {
 		body,
-		// Remove the line below if you don't have an icon file in public/,
-		// or point it at whatever icon file you do have.
 		icon: "/icon-192.png",
+		vibrate: [200, 100, 200], // vibrate 200ms, pause 100ms, vibrate 200ms
 	});
 });
