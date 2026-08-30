@@ -1,28 +1,27 @@
 name: Process reminders
 on:
-    # This allows you to trigger it manually
-    workflow_dispatch:
-    # This allows an external service (cron-job.org) to trigger it
-    repository_dispatch:
-        types: [trigger-reminders]
-    # Keep the schedule as a backup
     schedule:
         - cron: "*/5 * * * *"
-
+    workflow_dispatch:
 jobs:
     process:
         runs-on: ubuntu-latest
-        timeout-minutes: 1
+        timeout-minutes: 2
         concurrency:
             group: process-reminders
             cancel-in-progress: false
         steps:
             - uses: actions/checkout@v4
-
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
+                  cache-dependency-path: functions/package-lock.json
+            - run: npm ci --no-audit --no-fund
+              working-directory: functions
             - name: Process due reminders
               env:
                   FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
                   APP_URL: ${{ vars.APP_URL }}
                   ICON_URL: ${{ vars.ICON_URL }}
-              # Correct path: functions folder -> dist folder -> index.js
-              run: node functions/dist/index.cjs
+              run: node functions/process-reminders.mjs
