@@ -25,4 +25,4 @@ jobs:
                   APP_URL: ${{ vars.APP_URL }}
                   ICON_URL: ${{ vars.ICON_URL }}
               # Correct path: functions folder -> dist folder -> index.js
-              run: node functions/dist/index.js
+              run: node functions/dist/index.mjs
