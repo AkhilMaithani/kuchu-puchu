@@ -1,8 +1,14 @@
 name: Process reminders
 on:
+    # 1. This allows your cron-job.org timer to work!
+    repository_dispatch:
+        types: [trigger-reminders]
+    # 2. This allows you to trigger it manually from the Actions tab
+    workflow_dispatch:
+    # 3. Backup timer (can be unreliable, but good to have)
     schedule:
         - cron: "*/5 * * * *"
-    workflow_dispatch:
+
 jobs:
     process:
         runs-on: ubuntu-latest
@@ -10,18 +16,29 @@ jobs:
         concurrency:
             group: process-reminders
             cancel-in-progress: false
+
+        # This makes the YAML cleaner by setting the folder once for all steps
+        defaults:
+            run:
+                working-directory: functions
+
         steps:
             - uses: actions/checkout@v4
+
             - uses: actions/setup-node@v4
               with:
                   node-version: 22
-                  cache: npm
+                  cache: "npm"
                   cache-dependency-path: functions/package-lock.json
-            - run: npm ci --no-audit --no-fund
-              working-directory: functions
+
+            - name: Install Dependencies (Fast)
+              # --prefer-offline tells npm to use the cache more aggressively
+              run: npm ci --no-audit --no-fund --prefer-offline
+
             - name: Process due reminders
               env:
                   FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
                   APP_URL: ${{ vars.APP_URL }}
                   ICON_URL: ${{ vars.ICON_URL }}
-              run: node functions/process-reminders.mjs
+              # Since we set working-directory above, we don't need "functions/" here
+              run: node process-reminders.mjs
