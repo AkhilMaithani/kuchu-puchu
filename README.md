@@ -1,38 +1,147 @@
-# Friend Reminder 💌
+# 💌 Kuchu-Puchu: Friend Reminder
 
-A tiny invite-only PWA for a private circle of up to five people.
+**Kuchu-Puchu** is a tiny, private reminder ecosystem designed for intimate circles of up to five people. Unlike generic reminder apps, Kuchu-Puchu is built on the principle of **consent and kindness** — allowing friends to leave gentle nudges for one another that must be accepted before they become active.
 
-## Architecture
+> 💌 A private, consent-based reminder PWA for tiny circles of friends. Built with React, Firebase, and GitHub Actions to deliver serverless push notifications.
 
-- React + TypeScript + Vite
-- GitHub Pages for the frontend
-- Firebase Authentication (email/password)
-- Firebase Cloud Firestore for users, circle, reminders and device tokens
-- Firebase Cloud Messaging for web push
-- GitHub Actions for the reminder scheduler
-- **No Firebase Cloud Functions**
+---
 
-The intended zero-cost setup is a **public GitHub repository**: GitHub-hosted Actions are free for public repositories. Firebase Spark provides no-cost Authentication, FCM and Firestore quotas. Firebase states that Spark does not require payment information; if a Spark quota is exceeded, that product is shut off for the remainder of the month rather than automatically becoming billed.
+## 🌟 Core Philosophy & Why It Exists
 
-## Important timing note
+Most reminder apps are solo tools built for a noisy world of intrusive notifications. **Kuchu-Puchu** is a social tool built for a "safe space" — a small group of people supporting each other.
 
-The scheduler runs every 5 minutes. GitHub Actions scheduled workflows are not real-time guarantees, so a reminder can arrive a little late. For a fun five-person app this is intentional.
+By implementing **consent-based logic** and capping circles at 5 people, the app transforms a utility tool into a gesture of care. If you want to remind a friend to drink water, take a break, or remember an important date, the app ensures the reminder is *welcomed and requested*, not spammed.
 
-## Firebase setup
+- Remind **yourself** → active immediately.
+- Remind a **friend** → sent as a **Request**. They must **Approve** it before it can ever notify them.
 
-1. Create a Firebase project and keep it on the **Spark** plan.
-2. Enable Authentication → Email/Password.
-3. Create Firestore Database.
-4. Add a Web App and copy its browser config.
-5. In Project Settings → Cloud Messaging, create a Web Push certificate/key pair and copy the VAPID key.
-6. Deploy `firestore.rules` from the Firebase CLI or console.
-7. Create a Firebase service account JSON for the GitHub Actions scheduler. Do **not** commit it.
+## ✨ Features
 
-## GitHub setup
+- **Private Circles:** Create a secure circle or join one via a unique invite code (max 5 members).
+- **Consent-Based Reminders:** Requests must be explicitly accepted before they go live.
+- **Flexible Scheduling:** One-time events, daily habits, or custom hourly intervals (1–12 hours).
+- **PWA Experience:** Installable on iOS and Android, behaving like a native app with a standalone interface.
+- **Multi-Device Push:** Notifications delivered across all logged-in devices via Firebase Cloud Messaging (FCM).
+- **Member Management:** The circle owner generates invite codes to fill the circle.
 
-For the simplest no-billing setup, make the repository public. GitHub says standard Actions runners are free for public repositories. Private GitHub Free repositories have 2,000 included minutes/month and additional usage can be billed, so this project intentionally recommends public for the scheduler.
+---
 
-Add these repository Actions secrets:
+## 🏗 High-Level Design (HLD)
+
+Kuchu-Puchu uses a **serverless, event-driven architecture**. Instead of maintaining a costly always-on server, it uses GitHub Actions as a distributed cron-job engine and Firebase as the database and notification hub.
+
+### System Architecture Diagram
+
+```mermaid
+flowchart TB
+    subgraph Client["🖥️ Frontend (PWA)"]
+        UI[React + TypeScript UI]
+        SW[Service Worker<br/>firebase-messaging-sw.js]
+    end
+
+    subgraph Firebase["🔥 Firebase (BaaS)"]
+        Auth[Firebase Auth]
+        FS[(Cloud Firestore<br/>Users · Circles · Reminders)]
+        FCM[Firebase Cloud Messaging]
+    end
+
+    subgraph GH["⚙️ GitHub"]
+        Pages[GitHub Pages<br/>Static Hosting]
+        Action[GitHub Action<br/>reminders.yml<br/>runs every 5 min]
+        Script[process-reminders.mjs]
+    end
+
+    UI -->|Login / Signup| Auth
+    UI -->|Create / Approve reminders| FS
+    UI -.->|Deployed via| Pages
+    UI -->|Registers push token| FCM
+
+    Action -->|Triggers| Script
+    Script -->|Query ACTIVE + due| FS
+    Script -->|Send payload| FCM
+    FCM -->|Push| SW
+    SW -->|Displays| Notif[System Notification]
+    Notif -->|Click reopens| UI
+
+    style FS fill:#dfd,stroke:#333,stroke-width:3px
+    style FCM fill:#ffd,stroke:#333,stroke-width:2px
+    style Action fill:#bbf,stroke:#333,stroke-width:2px
+    style Script fill:#bbf,stroke:#333,stroke-width:2px
+```
+
+### How Everything Is Connected
+
+1. **Frontend (The Interface):** A React PWA hosted on **GitHub Pages** — handles auth, reminder creation, and push-token registration.
+2. **Database (The Brain):** **Firestore** stores user profiles, circle memberships, and the reminder queue.
+3. **The Trigger (The Clock):** A **GitHub Action** (`reminders.yml`) wakes up every 5 minutes.
+4. **The Processor (The Engine):** The Action runs `process-reminders.mjs`, querying Firestore for reminders where `status == 'ACTIVE'` and `nextRunAt <= now`.
+5. **The Delivery (The Messenger):** The processor sends a payload to **FCM**, which pushes to the user's browser/device.
+6. **The Receiver (The Worker):** The **Service Worker** (`firebase-messaging-sw.js`) listens in the background and displays the notification even if the app is closed.
+
+---
+
+## 🔁 Data Flow — "Life of a Reminder"
+
+```mermaid
+sequenceDiagram
+    participant A as User A (Creator)
+    participant DB as Firestore
+    participant B as User B (Receiver)
+    participant GHA as GitHub Action (5 min cron)
+    participant FCM as Firebase Cloud Messaging
+    participant SW as Service Worker (Device)
+
+    A->>DB: Create reminder for B (status: PENDING)
+    DB-->>B: Appears in "Requests" tab
+    B->>DB: Approve (status: PENDING → ACTIVE, set nextRunAt)
+
+    loop Every 5 minutes
+        GHA->>DB: Query WHERE status='ACTIVE' AND nextRunAt<=now
+        DB-->>GHA: Return due reminders
+        GHA->>DB: Fetch active device tokens for B
+        GHA->>FCM: Send multicast push payload
+        FCM->>SW: Deliver push
+        SW->>B: Show system notification (vibrate + alert)
+        B->>SW: Click notification
+        SW-->>B: Opens/focuses the PWA
+        GHA->>DB: ONCE → mark COMPLETED<br/>DAILY/HOURLY → recompute & update nextRunAt
+    end
+```
+
+### Step by step
+
+1. **Creation** — User A creates a reminder for User B → saved in Firestore as `PENDING`.
+2. **Consent** — User B sees the request in the "Requests" tab → clicks **Accept** → status becomes `ACTIVE`.
+3. **Scheduling** — The app computes `nextRunAt` based on the chosen frequency (e.g. `EVERY_3_HOURS`).
+4. **Detection** — Every 5 minutes, the GitHub Action runs → finds this reminder → checks if it's due.
+5. **Dispatch** — The script fetches all active device tokens for User B → sends the push via FCM.
+6. **Notification** — User B's device receives the push → Service Worker triggers a vibration/alert → clicking it opens the app.
+7. **Update** — The script computes the next occurrence and updates `nextRunAt` (or marks the reminder `COMPLETED` if it was one-time).
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Frontend** | `React` + `TypeScript` | UI logic and type safety |
+| **Build Tool** | `Vite` | Fast bundling, HMR, and PWA routing |
+| **Styling** | `CSS3` (Custom) | Soft, pastel "kindness" aesthetic |
+| **Backend/BaaS** | `Firebase` | Auth, Firestore, Cloud Messaging (FCM) |
+| **Automation** | `GitHub Actions` | Serverless cron jobs & CI/CD |
+| **Deployment** | `GitHub Pages` | Static site hosting |
+| **PWA** | `Web Manifest` + Service Worker | Installability and background push |
+
+---
+
+## 🚀 Setup & Deployment
+
+### Prerequisites
+- A Firebase project.
+- A GitHub repository.
+
+### 🔑 Secrets Configuration
+Add the following as **GitHub Actions Secrets**:
 
 - `VITE_FIREBASE_API_KEY`
 - `VITE_FIREBASE_AUTH_DOMAIN`
@@ -41,34 +150,32 @@ Add these repository Actions secrets:
 - `VITE_FIREBASE_MESSAGING_SENDER_ID`
 - `VITE_FIREBASE_APP_ID`
 - `VITE_FIREBASE_VAPID_KEY`
-- `FIREBASE_SERVICE_ACCOUNT_JSON` — complete service-account JSON, kept secret
+- `FIREBASE_SERVICE_ACCOUNT_JSON` (full JSON key for the service account)
 
-Enable GitHub Pages → Source: GitHub Actions.
-
-Set an optional repository variable `APP_URL` to the deployed Pages URL (for example `https://USER.github.io/REPO/`). The scheduler also works without it, but setting it makes notification clicks open the app directly.
-
-## Local development
-
+### 🛠 Local Development
 ```bash
-cp .env.example .env
+git clone <your-repo-url>
+cd kuchu-puchu
 npm install
+# create a .env file with the variables listed above
 npm run dev
 ```
 
-Put the Firebase browser config and VAPID key into `.env`.
+### 🚢 Deployment
+The project is configured for **GitHub Pages**. Push to `main` and the `deploy.yml` workflow will:
 
-## End-to-end test
+1. Generate the dynamic Service Worker using `generate-firebase-sw.mjs`.
+2. Build the Vite project.
+3. Deploy the `dist` folder to GitHub Pages (`/kuchu-puchu/`).
 
-1. Create the first account without an invite. This account owns the circle.
-2. Generate an invite code from Members.
-3. Create a second account in another browser/incognito window using the invite code.
-4. User A creates a reminder for User B.
-5. B sees it as PENDING and accepts it.
-6. Enable notifications on B's device.
-7. Wait for the GitHub Actions scheduler to process it.
-8. B should receive a push notification even when the PWA tab is closed.
-9. Cancel the reminder and verify later scheduler runs do not send it again.
+### 📊 Database Indexing
+Deploy the composite index found in `firebase.indexes.json` to your Firestore instance so the reminder engine can efficiently query due reminders:
 
-## Privacy
+```bash
+firebase deploy --only firestore:indexes
+```
 
-Firestore Security Rules restrict users to their own private circle and to reminders where they are the creator or receiver. GitHub Actions uses a Firebase service-account secret; that credential must never be placed in the frontend.
+---
+
+## 📜 License
+Distributed under the MIT License. See `LICENSE` for more information.
